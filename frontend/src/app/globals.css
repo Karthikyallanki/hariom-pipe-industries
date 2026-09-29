@@ -1,0 +1,96 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --color-brand-primary: #0b192c;
+    --color-brand-secondary: #1e3e62;
+    --color-brand-accent: #ff6500;
+    --color-brand-gold: #d97706;
+    --color-steel-dark: #1e293b;
+    --color-steel-medium: #475569;
+    --color-steel-light: #f1f5f9;
+    --color-surface-card: #ffffff;
+    --color-border-subtle: #e2e8f0;
+    --color-text-main: #0f172a;
+    --color-text-muted: #64748b;
+  }
+
+  body {
+    background-color: #f8fafc;
+    color: var(--color-text-main);
+    font-family: var(--font-inter), system-ui, -apple-system, sans-serif;
+    overflow-x: hidden;
+  }
+
+  /* Global Keyboard Focus-Visible Outline Rules for Accessibility (WCAG 2.1 AA) */
+  :focus-visible {
+    outline: 2px solid #ff6500;
+    outline-offset: 2px;
+  }
+
+  /* Respect reduced motion preferences */
+  @media (prefers-reduced-motion: reduce) {
+    *, ::before, ::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+/* Custom Utilities for Premium Industrial Look */
+.bg-industrial-gradient {
+  background: linear-gradient(135deg, #0b192c 0%, #1e3e62 100%);
+}
+
+.bg-metallic-surface {
+  background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+}
+
+.bg-steel-pattern {
+  background-color: #0b192c;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+.text-gradient-gold {
+  background: linear-gradient(135deg, #ff6500 0%, #fbbf24 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Screen Reader Skip-Link Accessibility Helpers */
+.skip-to-content {
+  position: absolute;
+  top: -100px;
+  left: 1rem;
+  z-index: 9999;
+  background: #ff6500;
+  color: #0b192c;
+  padding: 0.75rem 1.25rem;
+  font-weight: 700;
+  border-radius: 0.5rem;
+  transition: top 0.2s ease-in-out;
+}
+
+.skip-to-content:focus {
+  top: 1rem;
+  outline: 2px solid #ffffff;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #0f172a;
+}
+::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #ff6500;
+}
