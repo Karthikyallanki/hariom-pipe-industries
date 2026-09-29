@@ -1,168 +1,230 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import Link from 'next/link';
-import { Search, Filter, RefreshCw, SlidersHorizontal, ArrowUpRight } from 'lucide-react';
+import { Search, Filter, RefreshCw, SlidersHorizontal, ArrowUpRight, Sparkles, Building2, Layers, ShieldCheck } from 'lucide-react';
 import { SectionHeading } from '@/components/ui/SectionHeading';
 import { ProductCard } from '@/components/products/ProductCard';
 import { Button } from '@/components/ui/Button';
-import { apiClient } from '@/lib/api-client';
-import { IProduct, ICategory } from '@/types';
-import { PRODUCT_CATEGORIES } from '@/lib/constants';
+import { MOCK_PRODUCTS, MOCK_CATEGORIES, SUB_BRANDS } from '@/lib/mockData';
+import { IProduct } from '@/types';
 
 export default function ProductsPage() {
-  const [products, setProducts] = useState<IProduct[]>([]);
-  const [categories, setCategories] = useState<ICategory[]>([]);
-  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('');
-  const [selectedApplication, setSelectedApplication] = useState('');
+  const [activeFilter, setActiveFilter] = useState<'all' | 'pipes' | 'coils' | 'scaffolding' | 'billets'>('all');
+  const [selectedBrand, setSelectedBrand] = useState<string>('');
 
-  const fetchProducts = async () => {
-    setLoading(true);
-    let endpoint = '/products?limit=24';
-    if (selectedCategory) endpoint += `&category=${selectedCategory}`;
-    if (selectedApplication) endpoint += `&application=${encodeURIComponent(selectedApplication)}`;
-    if (searchQuery) endpoint += `&search=${encodeURIComponent(searchQuery)}`;
+  // Interactive Client-Side Filtering
+  const filteredProducts = useMemo(() => {
+    return MOCK_PRODUCTS.filter((product) => {
+      // Category filter match
+      const slug = product.category.slug.toLowerCase();
+      let matchesFilter = true;
+      if (activeFilter === 'pipes') {
+        matchesFilter = slug.includes('pipes');
+      } else if (activeFilter === 'coils') {
+        matchesFilter = slug.includes('coils');
+      } else if (activeFilter === 'scaffolding') {
+        matchesFilter = slug.includes('scaffolding');
+      } else if (activeFilter === 'billets') {
+        matchesFilter = slug.includes('billets');
+      }
 
-    const res = await apiClient.get<IProduct[]>(endpoint);
-    if (res.success && res.data) {
-      setProducts(res.data);
-    } else {
-      setProducts([]);
-    }
-    setLoading(false);
-  };
+      // Brand filter match
+      let matchesBrand = true;
+      if (selectedBrand) {
+        matchesBrand = product.brand.toLowerCase() === selectedBrand.toLowerCase();
+      }
 
-  useEffect(() => {
-    fetchProducts();
-  }, [selectedCategory, selectedApplication]);
+      // Search Query match
+      let matchesQuery = true;
+      if (searchQuery.trim() !== '') {
+        const q = searchQuery.toLowerCase();
+        const inName = product.name.toLowerCase().includes(q);
+        const inBrand = product.brand.toLowerCase().includes(q);
+        const inDesc = product.shortDescription.toLowerCase().includes(q);
+        const inSpecs = product.specifications?.some(
+          (s) => s.name.toLowerCase().includes(q) || s.value.toLowerCase().includes(q)
+        );
+        const inStds = product.standards?.some((std) => std.toLowerCase().includes(q));
+        matchesQuery = inName || inBrand || inDesc || inSpecs || inStds;
+      }
 
-  const handleSearchSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    fetchProducts();
-  };
+      return matchesFilter && matchesBrand && matchesQuery;
+    });
+  }, [activeFilter, selectedBrand, searchQuery]);
 
-  const clearFilters = () => {
+  const clearAllFilters = () => {
     setSearchQuery('');
-    setSelectedCategory('');
-    setSelectedApplication('');
+    setActiveFilter('all');
+    setSelectedBrand('');
   };
-
-  const applicationsList = [
-    'Structural Infrastructure',
-    'Solar Module Racking',
-    'Construction Framing',
-    'Potable Water Supply',
-    'Agricultural Irrigation',
-    'Automotive Components',
-    'Modular Furniture',
-  ];
 
   return (
-    <div className="min-h-screen bg-slate-50 py-12">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="bg-[#0b192c] text-white rounded-2xl p-8 md:p-12 mb-10 shadow-xl bg-steel-pattern relative overflow-hidden">
-          <div className="max-w-3xl relative z-10">
-            <span className="text-xs font-extrabold uppercase tracking-widest text-[#ff6500] bg-orange-950/80 px-3 py-1 rounded border border-orange-800/50 mb-4 inline-block">
-              Product Portfolio & Catalogue
+    <div className="min-h-screen bg-slate-900 text-slate-100 py-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-10">
+        {/* Page Banner Header */}
+        <div className="relative overflow-hidden bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 border border-amber-500/30 rounded-3xl p-8 md:p-12 shadow-2xl">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
+
+          <div className="relative z-10 max-w-3xl space-y-4">
+            <span className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-400 text-xs font-bold uppercase tracking-widest">
+              <Sparkles className="w-3.5 h-3.5" /> Interactive Product Catalog
             </span>
-            <h1 className="text-3xl md:text-5xl font-extrabold tracking-tight mb-4">
-              PRECISION STEEL PIPES & TUBE SYSTEMS
+            <h1 className="text-3xl md:text-5xl font-black tracking-tight text-white uppercase">
+              Precision Steel Pipes, Coils & Structural Systems
             </h1>
-            <p className="text-slate-300 text-base md:text-lg leading-relaxed mb-6">
-              Explore Hariom’s comprehensive range of Hot Rolled, Cold Rolled, Galvanized, Pre-Galvanized Pipes, Slit Coils, and Structural Scaffolding engineered to BIS standards.
+            <p className="text-slate-300 text-sm md:text-base leading-relaxed">
+              Explore Hariom’s complete hierarchy of IS-compliant Hot Rolled, Cold Rolled, Galvanized Pipes, Slit Coils, Scaffolding, and MS Billets manufactured across 4 integrated plant facilities.
             </p>
 
-            <div className="flex flex-wrap gap-4">
-              <Link href="/product-finder">
-                <Button variant="primary" icon={<SlidersHorizontal className="w-4 h-4" />}>
-                  Launch Product Finder
-                </Button>
-              </Link>
-              <Link href="/compare">
-                <Button variant="outline" className="border-slate-500 text-white hover:bg-slate-800">
-                  Compare Specifications
-                </Button>
-              </Link>
+            {/* Sub-brand highlight pills */}
+            <div className="pt-2 flex flex-wrap gap-2 text-xs">
+              <span className="text-slate-400 font-semibold self-center mr-1">Featured Sub-Brands:</span>
+              {SUB_BRANDS.map((b) => (
+                <button
+                  key={b.name}
+                  onClick={() => setSelectedBrand(selectedBrand === b.name ? '' : b.name)}
+                  className={`px-3 py-1 rounded-full border transition font-bold ${
+                    selectedBrand === b.name
+                      ? 'bg-amber-500 text-slate-950 border-amber-400'
+                      : 'bg-slate-950/80 border-slate-800 text-amber-400 hover:border-amber-500/50'
+                  }`}
+                >
+                  {b.name}
+                </button>
+              ))}
             </div>
           </div>
         </div>
 
-        {/* Search & Filter Control Bar */}
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-8">
-          <form onSubmit={handleSearchSubmit} className="flex flex-col md:flex-row gap-4 mb-6">
-            <div className="relative flex-1">
-              <Search className="w-5 h-5 absolute left-3.5 top-3 text-slate-400" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search products by keyword, grade, diameter or standard..."
-                className="w-full pl-11 pr-4 py-2.5 bg-slate-50 border border-slate-300 rounded-lg text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#0b192c]"
-              />
-            </div>
-            <Button type="submit" variant="primary">
-              Search Catalogue
-            </Button>
-          </form>
-
-          {/* Category Tabs */}
-          <div className="flex flex-wrap items-center gap-2 pt-4 border-t border-slate-100">
-            <span className="text-xs font-bold uppercase tracking-wider text-slate-400 mr-2 flex items-center gap-1">
-              <Filter className="w-3.5 h-3.5" /> Categories:
-            </span>
-            <button
-              onClick={() => setSelectedCategory('')}
-              className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${
-                selectedCategory === '' ? 'bg-[#0b192c] text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-              }`}
-            >
-              All Categories
-            </button>
-            {PRODUCT_CATEGORIES.map((cat) => (
+        {/* Filter Control Center */}
+        <div className="bg-slate-950 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-6">
+          {/* Search Bar */}
+          <div className="relative">
+            <Search className="w-5 h-5 absolute left-4 top-3.5 text-slate-500" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search by product name, sub-brand (Zincon, Dura Edge, Hariom Veer), or standard (IS 1239, IS 1161)..."
+              className="w-full pl-12 pr-4 py-3 bg-slate-900 border border-slate-800 rounded-xl text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-amber-500 transition"
+            />
+            {searchQuery && (
               <button
-                key={cat.slug}
-                onClick={() => setSelectedCategory(cat.slug)}
-                className={`px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${
-                  selectedCategory === cat.slug ? 'bg-[#0b192c] text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
+                onClick={() => setSearchQuery('')}
+                className="absolute right-4 top-3 text-xs text-slate-400 hover:text-white"
+              >
+                Clear
+              </button>
+            )}
+          </div>
+
+          {/* Core Category Tabs (Instant Client-side filter) */}
+          <div className="flex flex-wrap items-center justify-between gap-3 pt-4 border-t border-slate-800/80">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-400 mr-2 flex items-center gap-1">
+                <Filter className="w-4 h-4 text-amber-500" /> Category Filter:
+              </span>
+
+              <button
+                onClick={() => setActiveFilter('all')}
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                  activeFilter === 'all'
+                    ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 shadow-lg shadow-amber-500/20'
+                    : 'bg-slate-900 text-slate-300 border border-slate-800 hover:border-slate-700'
                 }`}
               >
-                {cat.name}
+                All Products ({MOCK_PRODUCTS.length})
               </button>
-            ))}
 
-            {(selectedCategory || selectedApplication || searchQuery) && (
               <button
-                onClick={clearFilters}
-                className="ml-auto text-xs text-[#ff6500] hover:underline flex items-center gap-1 font-semibold"
+                onClick={() => setActiveFilter('pipes')}
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                  activeFilter === 'pipes'
+                    ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 shadow-lg shadow-amber-500/20'
+                    : 'bg-slate-900 text-slate-300 border border-slate-800 hover:border-slate-700'
+                }`}
               >
-                <RefreshCw className="w-3 h-3" /> Clear Filters
+                Pipes & Tubes (4)
+              </button>
+
+              <button
+                onClick={() => setActiveFilter('coils')}
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                  activeFilter === 'coils'
+                    ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 shadow-lg shadow-amber-500/20'
+                    : 'bg-slate-900 text-slate-300 border border-slate-800 hover:border-slate-700'
+                }`}
+              >
+                Slit Coils (4)
+              </button>
+
+              <button
+                onClick={() => setActiveFilter('scaffolding')}
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                  activeFilter === 'scaffolding'
+                    ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 shadow-lg shadow-amber-500/20'
+                    : 'bg-slate-900 text-slate-300 border border-slate-800 hover:border-slate-700'
+                }`}
+              >
+                Scaffolding Systems (1)
+              </button>
+
+              <button
+                onClick={() => setActiveFilter('billets')}
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                  activeFilter === 'billets'
+                    ? 'bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 shadow-lg shadow-amber-500/20'
+                    : 'bg-slate-900 text-slate-300 border border-slate-800 hover:border-slate-700'
+                }`}
+              >
+                M.S. Billets (1)
+              </button>
+            </div>
+
+            {(activeFilter !== 'all' || selectedBrand || searchQuery) && (
+              <button
+                onClick={clearAllFilters}
+                className="text-xs text-amber-400 hover:text-amber-300 font-bold flex items-center gap-1 bg-amber-500/10 px-3 py-1.5 rounded-lg border border-amber-500/20"
+              >
+                <RefreshCw className="w-3.5 h-3.5" /> Reset All Filters
               </button>
             )}
           </div>
         </div>
 
-        {/* Product Grid */}
-        {loading ? (
-          <div className="text-center py-20">
-            <div className="w-10 h-10 border-4 border-[#ff6500] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-slate-600 font-medium">Loading Hariom Steel Product Specifications...</p>
-          </div>
-        ) : products.length === 0 ? (
-          <div className="bg-white rounded-xl border border-slate-200 p-12 text-center my-8">
-            <h3 className="text-lg font-bold text-slate-800 mb-2">No Matching Products Found</h3>
-            <p className="text-slate-600 text-sm max-w-md mx-auto mb-6">
-              We couldn't find any products matching your specific query filter. Try broadening your filter criteria or view all items.
+        {/* Product Grid Count Display */}
+        <div className="flex items-center justify-between text-xs text-slate-400 px-2">
+          <span>
+            Showing <strong className="text-white font-bold">{filteredProducts.length}</strong> products
+            {activeFilter !== 'all' ? ` in ${activeFilter.toUpperCase()}` : ''}
+          </span>
+          <span className="flex items-center gap-1.5 text-emerald-400 font-medium">
+            <ShieldCheck className="w-4 h-4 text-emerald-500" /> BIS IS 1239 / 1161 / 4923 Certified Quality
+          </span>
+        </div>
+
+        {/* Product Cards Interactive Grid */}
+        {filteredProducts.length === 0 ? (
+          <div className="bg-slate-950 rounded-2xl border border-slate-800 p-12 text-center space-y-4">
+            <div className="w-12 h-12 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center mx-auto text-amber-500">
+              <Filter className="w-6 h-6" />
+            </div>
+            <h3 className="text-lg font-bold text-white">No Products Found</h3>
+            <p className="text-xs text-slate-400 max-w-sm mx-auto">
+              We couldn't find any products matching your specific search query or active filter. Try resetting your filter selection.
             </p>
-            <Button variant="outline" onClick={clearFilters}>
-              Reset Search Filters
-            </Button>
+            <button
+              onClick={clearAllFilters}
+              className="px-4 py-2 bg-amber-500 text-slate-950 font-bold text-xs rounded-lg hover:bg-amber-400 transition"
+            >
+              Reset Filters
+            </button>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {products.map((product) => (
+            {filteredProducts.map((product) => (
               <ProductCard key={product._id} product={product} />
             ))}
           </div>

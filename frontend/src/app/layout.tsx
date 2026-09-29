@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google';
 import './globals.css';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
+import { FloatingActionButton } from '@/components/ui/FloatingActionButton';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter', display: 'swap' });
 
@@ -131,6 +132,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <main id="main-content" className="flex-1" tabIndex={-1}>
           {children}
         </main>
+        <FloatingActionButton />
         <Footer />
       </body>
     </html>
