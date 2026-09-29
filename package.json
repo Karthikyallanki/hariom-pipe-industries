@@ -12,6 +12,8 @@
     "dev:all": "npm run dev:backend & npm run dev:frontend",
     "dev:frontend": "npm run dev --prefix frontend",
     "dev:backend": "npm run dev --prefix backend",
+    "build": "npm run build --prefix frontend",
+    "vercel-build": "npm run build --prefix frontend",
     "build:frontend": "npm run build --prefix frontend",
     "build:backend": "npm run build --prefix backend",
     "test:backend": "npm run test --prefix backend"
