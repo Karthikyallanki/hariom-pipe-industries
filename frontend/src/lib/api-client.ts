@@ -1,9 +1,19 @@
 import { ApiResponse } from '@/types';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
+function getApiBaseUrl(): string {
+  if (process.env.NEXT_PUBLIC_API_URL) {
+    return process.env.NEXT_PUBLIC_API_URL;
+  }
+  // In local browser environment, default to local backend port 5000 if running locally
+  if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+    return 'http://localhost:5000/api';
+  }
+  return '/api';
+}
 
 async function fetcher<T>(endpoint: string, options: RequestInit = {}): Promise<ApiResponse<T>> {
-  const url = `${API_BASE_URL}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
+  const baseUrl = getApiBaseUrl();
+  const url = `${baseUrl}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
 
   const headers = {
     'Content-Type': 'application/json',
@@ -16,8 +26,25 @@ async function fetcher<T>(endpoint: string, options: RequestInit = {}): Promise<
       headers,
     });
 
-    const data = await res.json();
-    return data;
+    const contentType = res.headers.get('content-type');
+    
+    // Check if response is valid JSON
+    if (contentType && contentType.includes('application/json')) {
+      const data = await res.json();
+      return data;
+    }
+
+    // If server returned HTML (e.g., 404 / 500 HTML page starting with <!DOCTYPE)
+    const textResponse = await res.text();
+    console.warn(`[API Client Warning] Non-JSON response received from ${url} (Status: ${res.status}):`, textResponse.substring(0, 150));
+
+    return {
+      success: false,
+      error: {
+        code: 'NON_JSON_RESPONSE',
+        message: `API endpoint returned non-JSON content (Status: ${res.status}).`,
+      },
+    };
   } catch (error) {
     console.error(`[API Client Error] Request failed for ${endpoint}:`, error);
     return {
